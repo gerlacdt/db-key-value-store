@@ -34,10 +34,20 @@ func writeBinaryBuffer(data []byte) *bytes.Buffer {
 }
 
 // Append the given byte-array to file
-func (db *Db) Append(data []byte) error {
+func (db *Db) Append(key []byte, data []byte) error {
+	keySizeBuf := writeBinaryBufferLength(key)
+	keyBuf := writeBinaryBuffer(key)
 	sizeBuf := writeBinaryBufferLength(data)
 	dataBuf := writeBinaryBuffer(data)
-	_, err := db.fileWrite.Write(sizeBuf.Bytes())
+	_, err := db.fileWrite.Write(keySizeBuf.Bytes())
+	if err != nil {
+		return err
+	}
+	_, err = db.fileWrite.Write(keyBuf.Bytes())
+	if err != nil {
+		return nil
+	}
+	_, err = db.fileWrite.Write(sizeBuf.Bytes())
 	if err != nil {
 		return err
 	}

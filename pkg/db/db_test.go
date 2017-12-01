@@ -3,9 +3,35 @@ package db
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"os"
 	"testing"
 )
+
+var testdb = "db.test.bin"
+
+func clean(filename string) error {
+	err := os.Remove(filename)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func before(filename string) {
+	err := clean(filename)
+	if err != nil {
+		// panic("could not delete db file")
+	}
+}
+
+func teardown(filename string) {
+	err := clean(filename)
+	if err != nil {
+		// panic("could not delete db file")
+	}
+}
 
 func TestWriteBinaryLength(t *testing.T) {
 
@@ -41,6 +67,23 @@ func TestWriteBinary(t *testing.T) {
 func readEntry(file *os.File, data []byte, t *testing.T) []byte {
 	readSize(file, data, t)
 	return readData(file, data, t)
+}
+
+type Entry struct {
+	Key       []byte
+	KeySize   int
+	Value     []byte
+	ValueSize int
+}
+
+func readKeyValue(file *os.File, key []byte, data []byte, t *testing.T) *Entry {
+	keySize := readSize(file, key, t)
+	readKey := readData(file, key, t)
+
+	dataSize := readSize(file, data, t)
+	readData := readData(file, data, t)
+
+	return &Entry{Key: readKey, KeySize: keySize, Value: readData, ValueSize: dataSize}
 }
 
 func readSize(file *os.File, data []byte, t *testing.T) int {
@@ -86,19 +129,14 @@ func readData(file *os.File, data []byte, t *testing.T) []byte {
 	return dataBuf
 }
 
-func clean(filename string, t *testing.T) {
-	err := os.Remove(filename)
-
-	if err != nil {
-		t.Fatalf("error deleting file %v", err)
-	}
-}
-
 func TestSingleAppend(t *testing.T) {
-	testdb := "db.test.bin"
-	data := []byte("hello")
+	before(testdb)
+	defer teardown(testdb)
+
+	key := []byte("foo-key")
+	data := []byte("foo-value")
 	db := NewDb(testdb)
-	err := db.Append(data)
+	err := db.Append(key, data)
 	if err != nil {
 		t.Fatalf("error append")
 	}
@@ -106,20 +144,28 @@ func TestSingleAppend(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error open file for reading %v", err)
 	}
-	readEntry(file, data, t)
-	clean(testdb, t)
+	entry := readKeyValue(file, key, data, t)
+	if !bytes.Equal(key, entry.Key) {
+		t.Fatalf("data expected %s, got %s", key, entry.Key)
+	}
+	if !bytes.Equal(data, entry.Value) {
+		t.Fatalf("data expected %s, got %s", data, entry.Value)
+	}
 }
 
 func TestMultiAppend(t *testing.T) {
-	testdb := "db.test.bin"
-	data := []byte("hello")
-	data2 := []byte("foo-world")
+	before(testdb)
+	defer teardown(testdb)
+	key := []byte("k1")
+	data := []byte("h1")
+	key2 := []byte("k2")
+	data2 := []byte("h2")
 	db := NewDb(testdb)
-	err := db.Append(data)
+	err := db.Append(key, data)
 	if err != nil {
 		t.Fatalf("error append")
 	}
-	err = db.Append(data2)
+	err = db.Append(key2, data2)
 	if err != nil {
 		t.Fatalf("error append")
 	}
@@ -127,7 +173,33 @@ func TestMultiAppend(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error open file for reading %v", err)
 	}
-	readEntry(file, data, t)
-	readEntry(file, data2, t)
-	clean(testdb, t)
+	currentOffset, err := file.Seek(0, 1)
+	if err != nil {
+		t.Fatalf("ERROR file seek %v", err)
+	}
+	fmt.Printf("after open offset: %d\n", currentOffset)
+	entry := readKeyValue(file, key, data, t)
+	if !bytes.Equal(key, entry.Key) {
+		t.Fatalf("data expected %s, got %s", key, entry.Key)
+	}
+	if !bytes.Equal(data, entry.Value) {
+		t.Fatalf("data expected %s, got %s", data, entry.Value)
+	}
+	currentOffset, err = file.Seek(0, 1)
+	if err != nil {
+		t.Fatalf("ERROR file seek %v", err)
+	}
+	fmt.Printf("after 1. read offset: %d\n", currentOffset)
+	entry = readKeyValue(file, key2, data2, t)
+	currentOffset, err = file.Seek(0, 1)
+	if err != nil {
+		t.Fatalf("ERROR file seek %v", err)
+	}
+	fmt.Printf("after 2. read offset: %d\n", currentOffset)
+	if !bytes.Equal(key2, entry.Key) {
+		t.Fatalf("data expected %s, got %s", key, entry.Key)
+	}
+	if !bytes.Equal(data2, entry.Value) {
+		t.Fatalf("data expected %s, got %s", data, entry.Value)
+	}
 }
