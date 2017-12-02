@@ -130,7 +130,7 @@ func TestSingleAppend(t *testing.T) {
 	key := []byte("foo-key")
 	data := []byte("foo-value")
 	db := NewDb(testdb)
-	err := db.Append(key, data)
+	err := db.append(key, data)
 	if err != nil {
 		t.Fatalf("error append")
 	}
@@ -155,11 +155,11 @@ func TestMultiAppend(t *testing.T) {
 	key2 := []byte("k2")
 	data2 := []byte("h2")
 	db := NewDb(testdb)
-	err := db.Append(key, data)
+	err := db.append(key, data)
 	if err != nil {
 		t.Fatalf("error append")
 	}
-	err = db.Append(key2, data2)
+	err = db.append(key2, data2)
 	if err != nil {
 		t.Fatalf("error append")
 	}

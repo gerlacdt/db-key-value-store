@@ -41,8 +41,8 @@ func writeBinaryBuffer(data []byte) *bytes.Buffer {
 	return buf
 }
 
-// Append the given byte-array to file
-func (db *Db) Append(key []byte, data []byte) error {
+// append the given byte-array to file
+func (db *Db) append(key []byte, data []byte) error {
 	keySizeBuf := writeBinaryBufferLength(key)
 	keyBuf := writeBinaryBuffer(key)
 	sizeBuf := writeBinaryBufferLength(data)
@@ -75,7 +75,7 @@ func (db *Db) Append(key []byte, data []byte) error {
 func (db *Db) Set(item *Entity) error {
 	offset, err := db.fileWrite.Seek(0, 2)
 	key := []byte(item.Key)
-	err = db.Append(key, item.Value)
+	err = db.append(key, item.Value)
 	if err != nil {
 		return err
 	}
