@@ -12,6 +12,13 @@ type Db struct {
 	filename  string
 	fileWrite *os.File
 	fileRead  *os.File
+	offsetMap map[string]int64
+}
+
+// Entity is the default structure which is used for the database api
+type Entity struct {
+	Key   string
+	Value []byte
 }
 
 func writeBinaryBufferLength(data []byte) *bytes.Buffer {
@@ -58,9 +65,30 @@ func (db *Db) Append(key []byte, data []byte) error {
 	return nil
 }
 
-// ReadAll of file and return as string
-func (db *Db) ReadAll() string {
-	return ""
+// Set / stores a key-value pair in the database
+func (db *Db) Set(item *Entity) error {
+	key := []byte(item.Key)
+	err := db.Append(key, item.Value)
+	if err != nil {
+		return err
+	}
+	offset, err := db.fileWrite.Seek(0, 1)
+	if err != nil {
+		return err
+	}
+	db.offsetMap[item.Key] = offset
+	return nil
+}
+
+// Get a key-value pair from the database
+func (db *Db) Get(key string) *Entity {
+
+	return nil
+}
+
+// ReadAll of a file and return all entries in the database
+func (db *Db) ReadAll() []*Entity {
+	return nil
 }
 
 // NewDb return a new intialized Db
@@ -73,6 +101,7 @@ func NewDb(filename string) *Db {
 	if err != nil {
 		log.Fatalf("error file opening for read")
 	}
-	db := &Db{filename: filename, fileWrite: fileWrite, fileRead: fileRead}
+	offsetMap := make(map[string]int64)
+	db := &Db{filename: filename, fileWrite: fileWrite, fileRead: fileRead, offsetMap: offsetMap}
 	return db
 }

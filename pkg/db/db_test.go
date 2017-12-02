@@ -203,3 +203,53 @@ func TestMultiAppend(t *testing.T) {
 		t.Fatalf("data expected %s, got %s", data, entry.Value)
 	}
 }
+
+func TestSingleSet(t *testing.T) {
+	before(testdb)
+	defer teardown(testdb)
+
+	key := "k1"
+	data := []byte("v1")
+	db := NewDb(testdb)
+	err := db.Set(&Entity{Key: key, Value: data})
+	if err != nil {
+		t.Fatalf("error db.set: %v", err)
+	}
+	offset := db.offsetMap[key]
+	expectedOffset := int64(20)
+	if offset != expectedOffset {
+		t.Fatalf("expected offset %d, got %d", expectedOffset, offset)
+	}
+}
+
+func TestMultiSet(t *testing.T) {
+	before(testdb)
+	defer teardown(testdb)
+
+	key := "k1"
+	data := []byte("v1")
+	db := NewDb(testdb)
+	err := db.Set(&Entity{Key: key, Value: data})
+	if err != nil {
+		t.Fatalf("error db.set: %v", err)
+	}
+	offset := db.offsetMap[key]
+	expectedOffset := int64(20)
+	if offset != expectedOffset {
+		t.Fatalf("expected offset %d, got %d", expectedOffset, offset)
+	}
+
+	key = "k2"
+	data = []byte("v2")
+	db = NewDb(testdb)
+	err = db.Set(&Entity{Key: key, Value: data})
+	if err != nil {
+		t.Fatalf("error db.set: %v", err)
+	}
+	offset = db.offsetMap[key]
+	expectedOffset = int64(40)
+	if offset != expectedOffset {
+		t.Fatalf("expected offset %d, got %d", expectedOffset, offset)
+	}
+
+}
