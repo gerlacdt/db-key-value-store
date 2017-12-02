@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log"
 	"os"
 )
@@ -46,7 +47,12 @@ func (db *Db) Append(key []byte, data []byte) error {
 	keyBuf := writeBinaryBuffer(key)
 	sizeBuf := writeBinaryBufferLength(data)
 	dataBuf := writeBinaryBuffer(data)
-	_, err := db.fileWrite.Write(keySizeBuf.Bytes())
+
+	_, err := db.fileWrite.Seek(0, 2)
+	if err != nil {
+		return nil
+	}
+	_, err = db.fileWrite.Write(keySizeBuf.Bytes())
 	if err != nil {
 		return err
 	}
@@ -67,12 +73,12 @@ func (db *Db) Append(key []byte, data []byte) error {
 
 // Set / stores a key-value pair in the database
 func (db *Db) Set(item *Entity) error {
+	offset, err := db.fileWrite.Seek(0, 2)
 	key := []byte(item.Key)
-	err := db.Append(key, item.Value)
+	err = db.Append(key, item.Value)
 	if err != nil {
 		return err
 	}
-	offset, err := db.fileWrite.Seek(0, 1)
 	if err != nil {
 		return err
 	}
@@ -81,9 +87,57 @@ func (db *Db) Set(item *Entity) error {
 }
 
 // Get a key-value pair from the database
-func (db *Db) Get(key string) *Entity {
+func (db *Db) Get(key string) (*Entity, error) {
+	offset, ok := db.offsetMap[key]
+	if !ok {
+		return nil, fmt.Errorf("Key not in database")
+	}
+	db.fileRead.Seek(offset, 0)
+	keySize, err := db.readSize()
+	if err != nil {
+		return nil, fmt.Errorf("key readSize error, %v", err)
+	}
+	readKey, err := db.readData(keySize)
+	if err != nil {
+		return nil, fmt.Errorf("key readData error, %v", err)
+	}
+	dataSize, err := db.readSize()
+	if err != nil {
+		return nil, fmt.Errorf("data readSize error, %v", err)
+	}
+	readData, err := db.readData(dataSize)
+	if err != nil {
+		return nil, fmt.Errorf("data readData error, %v", err)
+	}
+	return &Entity{Key: string(readKey), Value: readData}, nil
+}
 
-	return nil
+func (db *Db) readSize() (uint64, error) {
+	intsize := 8
+	sizeBuf := make([]byte, intsize)
+	_, err := db.fileRead.Read(sizeBuf)
+	if err != nil {
+		return 0, err
+	}
+	var b = bytes.NewReader(sizeBuf)
+	var readSize uint64
+	err = binary.Read(b, binary.LittleEndian, &readSize)
+	return readSize, nil
+}
+
+func (db *Db) readData(lengthOf uint64) ([]byte, error) {
+	dataBuf := make([]byte, lengthOf)
+	_, err := db.fileRead.Read(dataBuf)
+	if err != nil {
+		return nil, err
+	}
+	var b = bytes.NewReader(dataBuf)
+	bbuf := make([]byte, lengthOf)
+	err = binary.Read(b, binary.LittleEndian, bbuf)
+	if err != nil {
+		return nil, err
+	}
+	return dataBuf, nil
 }
 
 // ReadAll of a file and return all entries in the database
@@ -93,7 +147,7 @@ func (db *Db) ReadAll() []*Entity {
 
 // NewDb return a new intialized Db
 func NewDb(filename string) *Db {
-	fileWrite, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	fileWrite, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatalf("error file opening for write")
 	}

@@ -3,7 +3,6 @@ package db
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"os"
 	"testing"
 )
@@ -64,26 +63,21 @@ func TestWriteBinary(t *testing.T) {
 	}
 }
 
-func readEntry(file *os.File, data []byte, t *testing.T) []byte {
-	readSize(file, data, t)
-	return readData(file, data, t)
-}
-
-type Entry struct {
+type testEntry struct {
 	Key       []byte
 	KeySize   int
 	Value     []byte
 	ValueSize int
 }
 
-func readKeyValue(file *os.File, key []byte, data []byte, t *testing.T) *Entry {
+func readKeyValue(file *os.File, key []byte, data []byte, t *testing.T) *testEntry {
 	keySize := readSize(file, key, t)
 	readKey := readData(file, key, t)
 
 	dataSize := readSize(file, data, t)
 	readData := readData(file, data, t)
 
-	return &Entry{Key: readKey, KeySize: keySize, Value: readData, ValueSize: dataSize}
+	return &testEntry{Key: readKey, KeySize: keySize, Value: readData, ValueSize: dataSize}
 }
 
 func readSize(file *os.File, data []byte, t *testing.T) int {
@@ -173,11 +167,6 @@ func TestMultiAppend(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error open file for reading %v", err)
 	}
-	currentOffset, err := file.Seek(0, 1)
-	if err != nil {
-		t.Fatalf("ERROR file seek %v", err)
-	}
-	fmt.Printf("after open offset: %d\n", currentOffset)
 	entry := readKeyValue(file, key, data, t)
 	if !bytes.Equal(key, entry.Key) {
 		t.Fatalf("data expected %s, got %s", key, entry.Key)
@@ -185,17 +174,7 @@ func TestMultiAppend(t *testing.T) {
 	if !bytes.Equal(data, entry.Value) {
 		t.Fatalf("data expected %s, got %s", data, entry.Value)
 	}
-	currentOffset, err = file.Seek(0, 1)
-	if err != nil {
-		t.Fatalf("ERROR file seek %v", err)
-	}
-	fmt.Printf("after 1. read offset: %d\n", currentOffset)
 	entry = readKeyValue(file, key2, data2, t)
-	currentOffset, err = file.Seek(0, 1)
-	if err != nil {
-		t.Fatalf("ERROR file seek %v", err)
-	}
-	fmt.Printf("after 2. read offset: %d\n", currentOffset)
 	if !bytes.Equal(key2, entry.Key) {
 		t.Fatalf("data expected %s, got %s", key, entry.Key)
 	}
@@ -216,7 +195,7 @@ func TestSingleSet(t *testing.T) {
 		t.Fatalf("error db.set: %v", err)
 	}
 	offset := db.offsetMap[key]
-	expectedOffset := int64(20)
+	expectedOffset := int64(0)
 	if offset != expectedOffset {
 		t.Fatalf("expected offset %d, got %d", expectedOffset, offset)
 	}
@@ -234,22 +213,90 @@ func TestMultiSet(t *testing.T) {
 		t.Fatalf("error db.set: %v", err)
 	}
 	offset := db.offsetMap[key]
-	expectedOffset := int64(20)
+	expectedOffset := int64(0)
 	if offset != expectedOffset {
 		t.Fatalf("expected offset %d, got %d", expectedOffset, offset)
 	}
 
 	key = "k2"
 	data = []byte("v2")
-	db = NewDb(testdb)
 	err = db.Set(&Entity{Key: key, Value: data})
 	if err != nil {
 		t.Fatalf("error db.set: %v", err)
 	}
 	offset = db.offsetMap[key]
-	expectedOffset = int64(40)
+	expectedOffset = int64(20)
 	if offset != expectedOffset {
 		t.Fatalf("expected offset %d, got %d", expectedOffset, offset)
 	}
 
+}
+
+func TestSingleGet(t *testing.T) {
+	before(testdb)
+	defer teardown(testdb)
+
+	key := "k12"
+	data := []byte("v12")
+	db := NewDb(testdb)
+	err := db.Set(&Entity{Key: key, Value: data})
+	if err != nil {
+		t.Fatalf("error db.set: %v", err)
+	}
+
+	item, err := db.Get(key)
+	if err != nil {
+		t.Fatalf("error GETTING from database %v", err)
+	}
+	if item.Key != key {
+		t.Fatalf("expected %v, got %v", key, item.Key)
+	}
+
+	if !bytes.Equal(data, item.Value) {
+		t.Fatalf("expected %s, got %s", data, item.Value)
+	}
+}
+
+func TestMultiGet(t *testing.T) {
+	before(testdb)
+	defer teardown(testdb)
+
+	key := "foo"
+	data := []byte("bar")
+	db := NewDb(testdb)
+	err := db.Set(&Entity{Key: key, Value: data})
+	if err != nil {
+		t.Fatalf("error db.set: %v", err)
+	}
+
+	item, err := db.Get(key)
+	if err != nil {
+		t.Fatalf("error GETTING from database %v", err)
+	}
+	if item.Key != key {
+		t.Fatalf("expected %v, got %v", key, item.Key)
+	}
+
+	if !bytes.Equal(data, item.Value) {
+		t.Fatalf("expected %s, got %s", data, item.Value)
+	}
+
+	key = "key1"
+	data = []byte("value1")
+	err = db.Set(&Entity{Key: key, Value: data})
+	if err != nil {
+		t.Fatalf("error db.set: %v", err)
+	}
+
+	item, err = db.Get(key)
+	if err != nil {
+		t.Fatalf("error GETTING from database %v", err)
+	}
+	if item.Key != key {
+		t.Fatalf("expected %v, got %v", key, item.Key)
+	}
+
+	if !bytes.Equal(data, item.Value) {
+		t.Fatalf("expected %s, got %s", data, item.Value)
+	}
 }
