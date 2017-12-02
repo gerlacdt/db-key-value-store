@@ -92,7 +92,10 @@ func (db *Db) Get(key string) (*Entity, error) {
 	if !ok {
 		return nil, fmt.Errorf("Key not in database")
 	}
-	db.fileRead.Seek(offset, 0)
+	_, err := db.fileRead.Seek(offset, 0)
+	if err != nil {
+		return nil, fmt.Errorf("file seek error %v", err)
+	}
 	keySize, err := db.readSize()
 	if err != nil {
 		return nil, fmt.Errorf("key readSize error, %v", err)
