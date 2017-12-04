@@ -125,6 +125,9 @@ func (db *Db) readSize() (uint64, error) {
 	var b = bytes.NewReader(sizeBuf)
 	var readSize uint64
 	err = binary.Read(b, binary.LittleEndian, &readSize)
+	if err != nil {
+		return 0, err
+	}
 	return readSize, nil
 }
 
