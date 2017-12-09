@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package pb;
+
+message Entity {
+  bool tombstone = 1;
+  string key = 2;
+  bytes value = 3;
+}

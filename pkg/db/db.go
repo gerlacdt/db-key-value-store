@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/gerlacdt/db-example/pb"
+	"github.com/golang/protobuf/proto"
 )
 
 // Db type
@@ -14,12 +17,6 @@ type Db struct {
 	fileWrite *os.File
 	fileRead  *os.File
 	offsetMap map[string]int64
-}
-
-// Entity is the default structure which is used for the database api
-type Entity struct {
-	Key   string
-	Value []byte
 }
 
 func writeBinaryBufferLength(data []byte) *bytes.Buffer {
@@ -32,62 +29,42 @@ func writeBinaryBufferLength(data []byte) *bytes.Buffer {
 	return buf
 }
 
-func writeBinaryBuffer(data []byte) *bytes.Buffer {
-	buf := new(bytes.Buffer)
-	err := binary.Write(buf, binary.LittleEndian, data)
+func (db *Db) pbAppend(entity *pb.Entity) (int64, error) {
+	entityBytes, err := proto.Marshal(entity)
 	if err != nil {
-		log.Fatalf("error writing data length %v", err)
+		return 0, fmt.Errorf("pb marshall error %v", err)
 	}
-	return buf
-}
-
-// append the given byte-array to file
-func (db *Db) append(key []byte, data []byte) error {
-	keySizeBuf := writeBinaryBufferLength(key)
-	keyBuf := writeBinaryBuffer(key)
-	sizeBuf := writeBinaryBufferLength(data)
-	dataBuf := writeBinaryBuffer(data)
-
-	_, err := db.fileWrite.Seek(0, 2)
+	byteBuffer := writeBinaryBufferLength(entityBytes)
+	offset, err := db.fileWrite.Seek(0, 2)
 	if err != nil {
-		return nil
+		return 0, fmt.Errorf("file seek error %v", err)
 	}
-	_, err = db.fileWrite.Write(keySizeBuf.Bytes())
+	_, err = byteBuffer.Write(entityBytes)
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("error writing byte buffer %v", err)
 	}
-	_, err = db.fileWrite.Write(keyBuf.Bytes())
+	_, err = db.fileWrite.Write(byteBuffer.Bytes())
 	if err != nil {
-		return nil
+		return 0, fmt.Errorf("entity size file write error %v", err)
 	}
-	_, err = db.fileWrite.Write(sizeBuf.Bytes())
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("entity data file write error %v", err)
 	}
-	_, err = db.fileWrite.Write(dataBuf.Bytes())
-	if err != nil {
-		return err
-	}
-	return nil
+	return offset, nil
 }
 
 // Set / stores a key-value pair in the database
-func (db *Db) Set(item *Entity) error {
-	offset, err := db.fileWrite.Seek(0, 2)
-	key := []byte(item.Key)
-	err = db.append(key, item.Value)
+func (db *Db) Set(entity *pb.Entity) error {
+	offset, err := db.pbAppend(entity)
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		return err
-	}
-	db.offsetMap[item.Key] = offset
+	db.offsetMap[entity.Key] = offset
 	return nil
 }
 
 // Get a key-value pair from the database
-func (db *Db) Get(key string) (*Entity, error) {
+func (db *Db) Get(key string) (*pb.Entity, error) {
 	offset, ok := db.offsetMap[key]
 	if !ok {
 		return nil, fmt.Errorf("Key not in database")
@@ -96,33 +73,25 @@ func (db *Db) Get(key string) (*Entity, error) {
 	if err != nil {
 		return nil, fmt.Errorf("file seek error %v", err)
 	}
-	keySize, err := db.readSize()
+	size, err := db.readSize()
 	if err != nil {
-		return nil, fmt.Errorf("key readSize error, %v", err)
+		return nil, fmt.Errorf("read size error, %v", err)
 	}
-	readKey, err := db.readData(keySize)
+	entity, err := db.readPbData(size)
 	if err != nil {
 		return nil, fmt.Errorf("key readData error, %v", err)
 	}
-	dataSize, err := db.readSize()
-	if err != nil {
-		return nil, fmt.Errorf("data readSize error, %v", err)
-	}
-	readData, err := db.readData(dataSize)
-	if err != nil {
-		return nil, fmt.Errorf("data readData error, %v", err)
-	}
-	return &Entity{Key: string(readKey), Value: readData}, nil
+	return entity, nil
 }
 
 func (db *Db) readSize() (uint64, error) {
 	intsize := 8
-	sizeBuf := make([]byte, intsize)
-	_, err := db.fileRead.Read(sizeBuf)
+	byteBuffer := make([]byte, intsize)
+	_, err := db.fileRead.Read(byteBuffer)
 	if err != nil {
 		return 0, err
 	}
-	var b = bytes.NewReader(sizeBuf)
+	var b = bytes.NewReader(byteBuffer)
 	var readSize uint64
 	err = binary.Read(b, binary.LittleEndian, &readSize)
 	if err != nil {
@@ -131,24 +100,20 @@ func (db *Db) readSize() (uint64, error) {
 	return readSize, nil
 }
 
-func (db *Db) readData(lengthOf uint64) ([]byte, error) {
+func (db *Db) readPbData(lengthOf uint64) (*pb.Entity, error) {
 	dataBuf := make([]byte, lengthOf)
 	_, err := db.fileRead.Read(dataBuf)
 	if err != nil {
 		return nil, err
 	}
-	var b = bytes.NewReader(dataBuf)
-	bbuf := make([]byte, lengthOf)
-	err = binary.Read(b, binary.LittleEndian, bbuf)
-	if err != nil {
-		return nil, err
-	}
-	return dataBuf, nil
-}
 
-// ReadAll of a file and return all entries in the database
-func (db *Db) ReadAll() []*Entity {
-	return nil
+	entity := &pb.Entity{}
+	err = proto.Unmarshal(dataBuf, entity)
+
+	if err != nil {
+		return nil, fmt.Errorf("proto unmarshal error %v", err)
+	}
+	return entity, nil
 }
 
 // NewDb return a new intialized Db
