@@ -63,6 +63,17 @@ func (db *Db) Set(entity *pb.Entity) error {
 	return nil
 }
 
+// Delete an entry for given key from database
+func (db *Db) Delete(key string) error {
+	entity := &pb.Entity{Tombstone: true, Key: key}
+	offset, err := db.pbAppend(entity)
+	if err != nil {
+		return err
+	}
+	db.offsetMap[key] = offset
+	return nil
+}
+
 // Get a key-value pair from the database
 func (db *Db) Get(key string) (*pb.Entity, error) {
 	offset, ok := db.offsetMap[key]
@@ -80,6 +91,9 @@ func (db *Db) Get(key string) (*pb.Entity, error) {
 	entity, err := db.readPbData(size)
 	if err != nil {
 		return nil, fmt.Errorf("key readData error, %v", err)
+	}
+	if entity.Tombstone {
+		return nil, fmt.Errorf("Key not in database (already deleted)")
 	}
 	return entity, nil
 }

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -34,34 +35,26 @@ func teardown(filename string) {
 }
 
 func TestSinglePbGet(t *testing.T) {
-	// prepare
 	before(testdb)
 	defer teardown(testdb)
 	db := NewDb(testdb)
-
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
-
-	// act
 	err := db.Set(entity)
 	if err != nil {
 		t.Fatalf("error append")
 	}
-
 	readEntity, err := db.Get(key)
 	if err != nil {
 		t.Fatalf("error getting entity %v", err)
 	}
-
-	// assert
 	if !reflect.DeepEqual(entity, readEntity) {
 		t.Fatalf("expected %v, got %v", entity, readEntity)
 	}
 }
 
 func TestMultiplePbGet(t *testing.T) {
-	// prepare
 	before(testdb)
 	defer teardown(testdb)
 	db := NewDb(testdb)
@@ -72,7 +65,6 @@ func TestMultiplePbGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error setting entity 1")
 	}
-
 	key1 := "foo-key-1"
 	value1 := "foo-value-1"
 	entity1 := &pb.Entity{Tombstone: false, Key: key1, Value: []byte(value1)}
@@ -80,20 +72,38 @@ func TestMultiplePbGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error setting entity 2")
 	}
-
-	// act
 	readEntity, err := db.Get(key)
 	if err != nil {
 		t.Fatalf("error getting entity %v", err)
 	}
-
 	readEntity1, err := db.Get(key1)
-
-	// assert
 	if !reflect.DeepEqual(entity, readEntity) {
 		t.Fatalf("expected %v, got %v", entity, readEntity)
 	}
 	if !reflect.DeepEqual(entity1, readEntity1) {
 		t.Fatalf("expected %v, got %v", entity1, readEntity1)
+	}
+}
+
+func TestSingleDelete(t *testing.T) {
+	// prepare
+	before(testdb)
+	defer teardown(testdb)
+	db := NewDb(testdb)
+	key := "foo-key"
+	value := "foo-value"
+	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
+	err := db.Set(entity)
+	if err != nil {
+		t.Fatalf("error append")
+	}
+	err = db.Delete(key)
+	readEntity, err := db.Get(key)
+	if readEntity != nil {
+		t.Fatalf("error deleting entity %v", err)
+	}
+	expectedErr := fmt.Errorf("Key not in database (already deleted)")
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Fatalf("expected error %v, got %v", expectedErr, err)
 	}
 }
