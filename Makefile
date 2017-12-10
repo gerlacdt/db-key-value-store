@@ -8,7 +8,7 @@ build:
 	go build -o ${NAME} github.com/gerlacdt/db-example/cmd/server
 
 test:
-	go test -v github.com/gerlacdt/db-example/pkg/...
+	go test -v github.com/gerlacdt/db-example/...
 
 proto:
 	protoc -I ${PB_DIR} ${PB_DIR}/db.proto --go_out=${PB_DIR}
