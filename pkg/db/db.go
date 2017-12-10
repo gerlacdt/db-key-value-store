@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -112,6 +113,38 @@ func (db *Db) readSize() (uint64, error) {
 		return 0, err
 	}
 	return readSize, nil
+}
+
+// Recover from a crash and populate in-memory hashmap from existing file
+func (db *Db) Recover() error {
+	// start reading file at beginning
+	offset := int64(0)
+	_, err := db.fileRead.Seek(offset, 0)
+	if err != nil {
+		return fmt.Errorf("file seek error %v", err)
+	}
+	// run through all key-value pairs and populate in-memory hashmap
+	for i := 0; i < 8; i++ {
+		fmt.Printf("begin offset %d\n", offset)
+		size, err := db.readSize()
+		if err != nil && err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("read size error, %v", err)
+		}
+		entity, err := db.readPbData(size)
+		if err != nil && err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("key readData error, %v", err)
+		}
+		db.offsetMap[entity.Key] = offset
+		offset += int64(size) + int64(8) // calculate next offset
+		fmt.Printf("end offset %d\n", offset)
+	}
+	return nil
 }
 
 func (db *Db) readPbData(lengthOf uint64) (*pb.Entity, error) {
