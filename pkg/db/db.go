@@ -125,7 +125,6 @@ func (db *Db) Recover() error {
 	}
 	// run through all key-value pairs and populate in-memory hashmap
 	for i := 0; i < 8; i++ {
-		fmt.Printf("begin offset %d\n", offset)
 		size, err := db.readSize()
 		if err != nil && err == io.EOF {
 			break
@@ -142,7 +141,6 @@ func (db *Db) Recover() error {
 		}
 		db.offsetMap[entity.Key] = offset
 		offset += int64(size) + int64(8) // calculate next offset
-		fmt.Printf("end offset %d\n", offset)
 	}
 	return nil
 }
