@@ -94,7 +94,7 @@ func (db *Db) Get(key string) (*pb.Entity, error) {
 		return nil, fmt.Errorf("key readData error, %v", err)
 	}
 	if entity.Tombstone {
-		return nil, fmt.Errorf("Key not in database (already deleted)")
+		return nil, fmt.Errorf("Key not in database (already deleted), %s", key)
 	}
 	return entity, nil
 }

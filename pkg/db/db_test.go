@@ -102,7 +102,7 @@ func TestSingleDelete(t *testing.T) {
 	if readEntity != nil {
 		t.Fatalf("error deleting entity %v", err)
 	}
-	expectedErr := fmt.Errorf("Key not in database (already deleted)")
+	expectedErr := fmt.Errorf("Key not in database (already deleted), %s", key)
 	if !reflect.DeepEqual(expectedErr, err) {
 		t.Fatalf("expected error %v, got %v", expectedErr, err)
 	}
@@ -130,8 +130,45 @@ func TestSingleRecover(t *testing.T) {
 	}
 
 	readEntity, err := db.Get(key)
-	if readEntity != nil {
+	if err != nil {
 		t.Fatalf("error deleting entity %v", err)
+	}
+	if !reflect.DeepEqual(entity, readEntity) {
+		t.Fatalf("error entities not equal after recovering")
+	}
+
+}
+
+func TestSingleRecoverWithDelete(t *testing.T) {
+	// prepare
+	before(testdb)
+	defer teardown(testdb)
+	db := NewDb(testdb)
+	key := "foo-key"
+	value := "foo-value"
+	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
+	err := db.Set(entity)
+	if err != nil {
+		t.Fatalf("error SET")
+	}
+
+	err = db.Delete(key)
+	if err != nil {
+		t.Fatalf("error DELETE")
+	}
+
+	// clear map
+	db.offsetMap = make(map[string]int64)
+
+	err = db.Recover()
+	if err != nil {
+		t.Fatalf("error recovering %v", err)
+	}
+
+	_, err = db.Get(key)
+	expectedErr := fmt.Errorf("Key not in database (already deleted), %s", key)
+	if !reflect.DeepEqual(expectedErr, err) {
+		t.Fatalf("expected error %v, got %v", expectedErr, err)
 	}
 }
 

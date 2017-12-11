@@ -8,12 +8,12 @@ import (
 
 // Handler holds all http methods
 type Handler struct {
-	db *Db
+	service *Service
 }
 
 // NewHandler is a constructor of all handlers
-func NewHandler(db *Db) *Handler {
-	return &Handler{db: db}
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
 }
 
 func getID(s string) (string, error) {
