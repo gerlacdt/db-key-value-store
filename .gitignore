@@ -1,4 +1,5 @@
 app
 db.bin
 db.test.bin
+app.db.bin
 vendor/

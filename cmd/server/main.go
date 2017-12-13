@@ -10,6 +10,18 @@ import (
 
 func main() {
 	fmt.Println("start app...")
-	http.HandleFunc("/db/", db.HandleDb)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	err := http.ListenAndServe(":8080", handler())
+	if err != nil {
+		log.Fatalf("error listening %v", err)
+	}
+}
+
+func handler() http.Handler {
+	r := http.NewServeMux()
+
+	mydb := db.NewDb("app.db.bin")
+	service := db.NewService(mydb)
+	myhandler := db.NewHandler(service)
+	r.HandleFunc("/db/", myhandler.HandleDb)
+	return r
 }

@@ -2,8 +2,11 @@ package db
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/gerlacdt/db-example/pb"
 )
 
 // Handler holds all http methods
@@ -26,43 +29,62 @@ func getID(s string) (string, error) {
 }
 
 // HandleDb handles all http routes
-func HandleDb(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleDb(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		getHandler(w, r)
+		h.getHandler(w, r)
 	} else if r.Method == "POST" {
-		setHandler(w, r)
+		h.setHandler(w, r)
 	} else if r.Method == "DELETE" {
-		deleteHandler(w, r)
+		h.deleteHandler(w, r)
 	}
 }
 
-func setHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := getID(r.URL.Path)
+func (h *Handler) setHandler(w http.ResponseWriter, r *http.Request) {
+	key, err := getID(r.URL.Path)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
+	}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Printf("%v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	entity := &pb.Entity{Key: key, Value: body}
+	err = h.service.Set(entity)
+	if err != nil {
+		fmt.Printf("%v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "SET, %q", id)
 }
 
-func getHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := getID(r.URL.Path)
+func (h *Handler) getHandler(w http.ResponseWriter, r *http.Request) {
+	key, err := getID(r.URL.Path)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Fprintf(w, "GET, %q", id)
-
+	entity, err := h.service.Get(key)
+	if err != nil {
+		fmt.Printf("%v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "GET, %v", entity)
 }
 
-func deleteHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := getID(r.URL.Path)
+func (h *Handler) deleteHandler(w http.ResponseWriter, r *http.Request) {
+	key, err := getID(r.URL.Path)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
+	err = h.service.Delete(key)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "DELETE, %q", id)
 }
