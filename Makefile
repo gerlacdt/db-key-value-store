@@ -10,7 +10,7 @@ build:
 test:
 	go test github.com/gerlacdt/db-example/...
 
-run:
+run: build
 	PORT=8080 DB_FILENAME=${DB_FILE} ./app
 
 proto:
