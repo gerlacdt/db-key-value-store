@@ -1,7 +1,7 @@
-.PHONY: build test proto clean docker-build
+.PHONY: build test run proto clean docker-build
 
 NAME=app
-DB_FILE=db.bin
+DB_FILE=app.db.bin
 PB_DIR=./pb
 
 build:
@@ -9,6 +9,9 @@ build:
 
 test:
 	go test -v github.com/gerlacdt/db-example/...
+
+run:
+	PORT=8080 DB_FILENAME=${DB_FILE} ./app
 
 proto:
 	protoc -I ${PB_DIR} ${PB_DIR}/db.proto --go_out=${PB_DIR}
