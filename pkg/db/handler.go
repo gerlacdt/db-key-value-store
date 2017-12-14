@@ -16,16 +16,19 @@ type Handler struct {
 
 // HTTPError contains http status code
 type HTTPError struct {
+	Err        error
 	StatusCode int
 	Message    string
 }
 
 // NewHTTPError constructor
-func NewHTTPError(statusCode int, message string) *HTTPError {
-	return &HTTPError{StatusCode: statusCode, Message: message}
+func NewHTTPError(err error, statusCode int, message string) *HTTPError {
+	return &HTTPError{Err: err, StatusCode: statusCode, Message: message}
 }
 
 func (e *HTTPError) Error() string {
+	// only log detailed error, don't return it to client
+	fmt.Printf(e.Err.Error() + ": " + e.Message)
 	return e.Message
 }
 
@@ -38,7 +41,7 @@ func (fn ErrorMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		switch err.(type) {
 		case *HTTPError:
 			e := err.(*HTTPError)
-			http.Error(w, e.Message, e.StatusCode)
+			http.Error(w, e.Error(), e.StatusCode)
 		default:
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -68,14 +71,19 @@ func (h *Handler) HandleDb(w http.ResponseWriter, r *http.Request) error {
 	} else if r.Method == "DELETE" {
 		return h.deleteHandler(w, r)
 	}
-	return NewHTTPError(http.StatusNotFound, "NOT FOUND")
+	return NewHTTPError(nil, http.StatusNotFound, "NOT FOUND")
 }
 
 func (h *Handler) setHandler(w http.ResponseWriter, r *http.Request) error {
 	key, err := getID(r.URL.Path)
 	if err != nil {
-		return NewHTTPError(http.StatusBadRequest, "requested key not valid")
+		return NewHTTPError(err, http.StatusBadRequest, "requested key not valid")
 	}
+
+	if r.Header.Get("Content-Type") != "application/octet-stream" {
+		return NewHTTPError(err, http.StatusBadRequest, "Mime-Type not supported, application/octet-stream is supported")
+	}
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
@@ -92,27 +100,31 @@ func (h *Handler) setHandler(w http.ResponseWriter, r *http.Request) error {
 func (h *Handler) getHandler(w http.ResponseWriter, r *http.Request) error {
 	key, err := getID(r.URL.Path)
 	if err != nil {
-		return NewHTTPError(http.StatusBadRequest, "requested key not valid")
+		return NewHTTPError(err, http.StatusBadRequest, "requested key not valid")
 	}
 	entity, err := h.service.Get(key)
 	if err != nil {
-		return NewHTTPError(http.StatusInternalServerError, "error GET the requested key")
+		return NewHTTPError(err, http.StatusInternalServerError, "error GET the requested key")
 	}
 	if entity == nil {
-		return NewHTTPError(http.StatusNotFound, "key does not exist")
+		return NewHTTPError(nil, http.StatusNotFound, "key does not exist")
 	}
-	fmt.Fprintf(w, "GET, %v", entity)
+
+	if r.URL.Query().Get("format") == "json" {
+		w.Header().Set("Content-Type", "application/json")
+	}
+	fmt.Fprintf(w, "%s", entity.Value)
 	return nil
 }
 
 func (h *Handler) deleteHandler(w http.ResponseWriter, r *http.Request) error {
 	key, err := getID(r.URL.Path)
 	if err != nil {
-		return NewHTTPError(http.StatusBadRequest, "requested key not valid")
+		return NewHTTPError(err, http.StatusBadRequest, "requested key not valid")
 	}
 	err = h.service.Delete(key)
 	if err != nil {
-		return NewHTTPError(http.StatusBadRequest, "requested key does not exist")
+		return NewHTTPError(err, http.StatusBadRequest, "requested key does not exist")
 	}
 	w.WriteHeader(http.StatusOK)
 	return nil
