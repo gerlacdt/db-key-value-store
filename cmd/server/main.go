@@ -22,6 +22,6 @@ func handler() http.Handler {
 	mydb := db.NewDb("app.db.bin")
 	service := db.NewService(mydb)
 	myhandler := db.NewHandler(service)
-	r.HandleFunc("/db/", myhandler.HandleDb)
+	r.Handle("/db/", db.ErrorMiddleware(myhandler.HandleDb))
 	return r
 }
