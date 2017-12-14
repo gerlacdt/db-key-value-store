@@ -20,6 +20,11 @@ func NewService(db *Db) *Service {
 	c := make(chan *SetRequest)
 	service := &Service{db: db, SetRequestChannel: c}
 
+	err := db.Recover()
+	if err != nil {
+		panic("error recovering from given filename: " + err.Error())
+	}
+
 	// start single background thread for SET request in order to prevent
 	// concurrency issues during save.
 	go func(queryChan <-chan *SetRequest) {
