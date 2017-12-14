@@ -8,7 +8,7 @@ build:
 	go build -o ${NAME} github.com/gerlacdt/db-example/cmd/server
 
 test:
-	go test -v github.com/gerlacdt/db-example/...
+	go test github.com/gerlacdt/db-example/...
 
 run:
 	PORT=8080 DB_FILENAME=${DB_FILE} ./app

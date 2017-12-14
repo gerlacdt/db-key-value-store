@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -206,9 +205,6 @@ func TestMultipleRecover(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error recovering %v", err)
 	}
-
-	fmt.Printf("recoverd offsetMap %v\n", db.offsetMap)
-
 	readEntity, err := db.Get(key)
 	if err != nil {
 		t.Fatalf("error getting entity %v", err)
