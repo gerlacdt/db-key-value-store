@@ -38,7 +38,6 @@ func (fn ErrorMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		switch err.(type) {
 		case *HTTPError:
 			e := err.(*HTTPError)
-			w.WriteHeader(e.StatusCode)
 			http.Error(w, e.Message, e.StatusCode)
 		default:
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -97,7 +96,10 @@ func (h *Handler) getHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 	entity, err := h.service.Get(key)
 	if err != nil {
-		return NewHTTPError(http.StatusNotFound, "key not found")
+		return NewHTTPError(http.StatusInternalServerError, "error GET the requested key")
+	}
+	if entity == nil {
+		return NewHTTPError(http.StatusNotFound, "key does not exist")
 	}
 	fmt.Fprintf(w, "GET, %v", entity)
 	return nil

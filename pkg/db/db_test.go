@@ -34,7 +34,7 @@ func teardown(filename string) {
 	}
 }
 
-func TestSinglePbGet(t *testing.T) {
+func TestSingleGet(t *testing.T) {
 	before(testdb)
 	defer teardown(testdb)
 	db := NewDb(testdb)
@@ -54,7 +54,7 @@ func TestSinglePbGet(t *testing.T) {
 	}
 }
 
-func TestMultiplePbGet(t *testing.T) {
+func TestMultipleGet(t *testing.T) {
 	before(testdb)
 	defer teardown(testdb)
 	db := NewDb(testdb)
@@ -99,12 +99,8 @@ func TestSingleDelete(t *testing.T) {
 	}
 	err = db.Delete(key)
 	readEntity, err := db.Get(key)
-	if readEntity != nil {
-		t.Fatalf("error deleting entity %v", err)
-	}
-	expectedErr := fmt.Errorf("Key not in database (already deleted), %s", key)
-	if !reflect.DeepEqual(expectedErr, err) {
-		t.Fatalf("expected error %v, got %v", expectedErr, err)
+	if readEntity != nil || err != nil {
+		t.Fatalf("readEntity expected nil, got %v", readEntity)
 	}
 }
 
@@ -165,10 +161,9 @@ func TestSingleRecoverWithDelete(t *testing.T) {
 		t.Fatalf("error recovering %v", err)
 	}
 
-	_, err = db.Get(key)
-	expectedErr := fmt.Errorf("Key not in database (already deleted), %s", key)
-	if !reflect.DeepEqual(expectedErr, err) {
-		t.Fatalf("expected error %v, got %v", expectedErr, err)
+	readEntity, err := db.Get(key)
+	if readEntity != nil || err != nil {
+		t.Fatalf("readEntity expected nil, got %v", readEntity)
 	}
 }
 

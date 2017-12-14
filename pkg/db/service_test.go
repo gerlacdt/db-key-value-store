@@ -46,12 +46,8 @@ func TestSingleServiceDelete(t *testing.T) {
 	}
 	err = service.Delete(key)
 	readEntity, err := service.Get(key)
-	if readEntity != nil {
-		t.Fatalf("error deleting entity %v", err)
-	}
-	expectedErr := fmt.Errorf("Key not in database (already deleted), %s", key)
-	if !reflect.DeepEqual(expectedErr, err) {
-		t.Fatalf("expected error %v, got %v", expectedErr, err)
+	if readEntity != nil || err != nil {
+		t.Fatalf("readEntity expected nil, got %v", readEntity)
 	}
 }
 

@@ -79,7 +79,7 @@ func (db *Db) Delete(key string) error {
 func (db *Db) Get(key string) (*pb.Entity, error) {
 	offset, ok := db.offsetMap[key]
 	if !ok {
-		return nil, fmt.Errorf("Key not in database")
+		return nil, nil
 	}
 	_, err := db.fileRead.Seek(offset, 0)
 	if err != nil {
@@ -94,7 +94,7 @@ func (db *Db) Get(key string) (*pb.Entity, error) {
 		return nil, fmt.Errorf("key readData error, %v", err)
 	}
 	if entity.Tombstone {
-		return nil, fmt.Errorf("Key not in database (already deleted), %s", key)
+		return nil, nil
 	}
 	return entity, nil
 }
