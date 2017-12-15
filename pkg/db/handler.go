@@ -28,7 +28,7 @@ func NewHTTPError(err error, statusCode int, message string) *HTTPError {
 
 func (e *HTTPError) Error() string {
 	// only log detailed error, don't return it to client
-	fmt.Printf(e.Err.Error() + ": " + e.Message)
+	fmt.Printf(e.Err.Error() + ": " + e.Message + "\n")
 	return e.Message
 }
 
@@ -71,7 +71,7 @@ func (h *Handler) HandleDb(w http.ResponseWriter, r *http.Request) error {
 	} else if r.Method == "DELETE" {
 		return h.deleteHandler(w, r)
 	}
-	return NewHTTPError(nil, http.StatusNotFound, "NOT FOUND")
+	return NewHTTPError(fmt.Errorf(""), http.StatusNotFound, "NOT FOUND")
 }
 
 func (h *Handler) setHandler(w http.ResponseWriter, r *http.Request) error {
@@ -107,7 +107,7 @@ func (h *Handler) getHandler(w http.ResponseWriter, r *http.Request) error {
 		return NewHTTPError(err, http.StatusInternalServerError, "error GET the requested key")
 	}
 	if entity == nil {
-		return NewHTTPError(nil, http.StatusNotFound, "key does not exist")
+		return NewHTTPError(fmt.Errorf(""), http.StatusNotFound, "key does not exist")
 	}
 
 	if r.URL.Query().Get("format") == "json" {
