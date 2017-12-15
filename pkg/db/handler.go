@@ -16,6 +16,12 @@ func NewMainHandler(filename string) http.Handler {
 	service := NewService(mydb)
 	myhandler := NewHandler(service)
 	r.Handle("/db/", ErrorMiddleware(myhandler.HandleDb))
+	r.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	return r
 }
 
