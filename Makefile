@@ -20,6 +20,6 @@ clean:
 	rm -f ${NAME} ${DB_FILE} ./pkg/db/db.test.bin
 
 docker-build:
-	GOOS=linux go build -o ${NAME}
-	docker build -t gerlacdt/go-example:latest .
+	GOOS=linux go build -o ${NAME} github.com/gerlacdt/db-example/cmd/server
+	docker build -t gerlacdt/db-example:latest .
 	rm -f ${NAME}
