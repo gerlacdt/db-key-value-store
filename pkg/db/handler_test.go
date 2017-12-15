@@ -9,17 +9,11 @@ import (
 	"testing"
 )
 
-// var testdb = "db.test.bin"
-
 func TestSingleHttpDelete(t *testing.T) {
 	// setup
 	before(testdb)
 	defer teardown(testdb)
-	r := http.NewServeMux()
-	mydb := NewDb(testdb)
-	service := NewService(mydb)
-	myhandler := NewHandler(service)
-	r.Handle("/db/", ErrorMiddleware(myhandler.HandleDb))
+	r := NewMainHandler(testdb)
 	srv := httptest.NewServer(r)
 
 	// act
@@ -55,11 +49,7 @@ func TestSingleHttpSetAndGet(t *testing.T) {
 	// setup
 	before(testdb)
 	defer teardown(testdb)
-	r := http.NewServeMux()
-	mydb := NewDb(testdb)
-	service := NewService(mydb)
-	myhandler := NewHandler(service)
-	r.Handle("/db/", ErrorMiddleware(myhandler.HandleDb))
+	r := NewMainHandler(testdb)
 	srv := httptest.NewServer(r)
 
 	// act

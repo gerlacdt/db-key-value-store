@@ -12,17 +12,9 @@ import (
 func main() {
 	config := config.NewConfig()
 	fmt.Println("start app...")
-	err := http.ListenAndServe(":"+config.Port, handler(config))
+	handler := db.NewMainHandler(config.Filename)
+	err := http.ListenAndServe(":"+config.Port, handler)
 	if err != nil {
 		log.Fatalf("error listening %v", err)
 	}
-}
-
-func handler(config *config.Config) http.Handler {
-	r := http.NewServeMux()
-	mydb := db.NewDb(config.Filename)
-	service := db.NewService(mydb)
-	myhandler := db.NewHandler(service)
-	r.Handle("/db/", db.ErrorMiddleware(myhandler.HandleDb))
-	return r
 }

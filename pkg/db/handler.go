@@ -9,6 +9,16 @@ import (
 	"github.com/gerlacdt/db-example/pb"
 )
 
+// NewMainHandler creates all http handlers
+func NewMainHandler(filename string) http.Handler {
+	r := http.NewServeMux()
+	mydb := NewDb(filename)
+	service := NewService(mydb)
+	myhandler := NewHandler(service)
+	r.Handle("/db/", ErrorMiddleware(myhandler.HandleDb))
+	return r
+}
+
 // Handler holds all http methods
 type Handler struct {
 	service *Service
