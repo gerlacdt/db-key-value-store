@@ -74,15 +74,46 @@ func (e *HTTPError) Error() string {
 // ErrorMiddleware wraps a normal handler and converts errors to corresponding http status codes
 type ErrorMiddleware func(http.ResponseWriter, *http.Request) error
 
+// ErrorJSON http response type
+type ErrorJSON struct {
+	Message string `json:"message"`
+}
+
 func (fn ErrorMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := fn(w, r)
 	if err != nil {
 		switch err.(type) {
 		case *HTTPError:
 			e := err.(*HTTPError)
-			http.Error(w, e.Error(), e.StatusCode)
+			info := &ErrorJSON{
+				Message: e.Error(),
+			}
+			body, err := json.Marshal(info)
+			if err != nil {
+				fmt.Printf("Could not encode error data: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(e.StatusCode)
+			_, err = w.Write(body)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			info := &ErrorJSON{
+				Message: err.Error(),
+			}
+			body, err := json.Marshal(info)
+			if err != nil {
+				fmt.Printf("Could not encode error data: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_, err = w.Write(body)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		}
 	}
 }
