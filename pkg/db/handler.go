@@ -151,7 +151,7 @@ func (h *Handler) setHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if r.Header.Get("Content-Type") != "application/octet-stream" {
-		return NewHTTPError(err, http.StatusBadRequest, "Mime-Type not supported, application/octet-stream is supported")
+		return NewHTTPError(fmt.Errorf(""), http.StatusBadRequest, "Mime-Type not supported, application/octet-stream is supported")
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
