@@ -1,12 +1,14 @@
 package db
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/gerlacdt/db-example/pb"
+	"github.com/gerlacdt/db-example/pkg/version"
 )
 
 // NewMainHandler creates all http handlers
@@ -22,7 +24,28 @@ func NewMainHandler(filename string) http.Handler {
 	r.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	r.Handle("/version", ErrorMiddleware(versionHandler))
 	return r
+}
+
+func versionHandler(w http.ResponseWriter, r *http.Request) error {
+	info := struct {
+		BuildTime string `json:"buildTime"`
+		Commit    string `json:"commit"`
+		Release   string `json:"release"`
+	}{
+		version.BuildTime, version.Commit, version.Release,
+	}
+	body, err := json.Marshal(info)
+	if err != nil {
+		return fmt.Errorf("Could not encode version data: %v", err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(body)
+	if err != nil {
+		return fmt.Errorf("Error writing to http response: %v", err)
+	}
+	return nil
 }
 
 // Handler holds all http methods
