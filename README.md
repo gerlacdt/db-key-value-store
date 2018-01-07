@@ -12,15 +12,15 @@ This is a learning project which implements a simple Key-Value database.
   * json (un)marshalling
   * testing package
 * learn about protocol buffers [google protocol buffers](https://developers.google.com/protocol-buffers/)
-* learn about golang concurrency with channels (used to make write-operations thread-safe)
+* learn about golang concurrency with channels
 * learn about database storages
 
 
 ### Implementation
 
-The data storage implementation is done according
-to the book [Designing Data-Intensive Applications](https://dataintensive.net)
-chapter 3 with an in-memory hash index.
+The data storage implementation is based on the descriptions in the book
+[Designing Data-Intensive Applications](https://dataintensive.net) chapter 3
+with an in-memory hash index.
 
 Currenty supported features:
 
@@ -33,16 +33,15 @@ Currenty supported features:
   * dockerized with health and readiness http-endpoints
   * graceful http server shutdown
 * prefers json but also supports binary data
-* thread-safe (exactly 1 write goroutine is used, so database-file is not corrupeted during parallel writes)
-* no dependencies (used plain golang http-package for handlers)
+* thread-safe (one single write goroutine is used, so database-file is not corrupted during parallel writes)
 
 
-Todos:
+ToDos:
 
-* use compactification for database-storage-files in order to "clean up" in the
-  background
-* use sparse hash-index like SSTables or LSM-Trees
-* better crash-handling (use write-ahead-log)
+* use multiple db-log-files
+* add "compaction" background job in order to free memory
+* use sparse index like SSTables or LSM-Trees
+* use snapshots for faster recovery/startup time
 
 
 ### Usage
