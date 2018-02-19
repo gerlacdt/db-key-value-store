@@ -25,14 +25,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	dbs, err := db.New(config.Filename)
+	f, err := os.Create(config.Filename)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer f.Close()
+	defer os.Remove(config.Filename)
 
 	srv := &http.Server{
 		Addr:    ":" + config.Port,
-		Handler: db.NewMainHandler(dbs),
+		Handler: db.NewMainHandler(db.New(f)),
 	}
 
 	go func() {

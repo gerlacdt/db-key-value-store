@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 
 	"github.com/gerlacdt/db-key-value-store/pb"
 	"github.com/golang/protobuf/proto"
@@ -14,20 +13,15 @@ import (
 
 // DB type
 type DB struct {
-	filename string
-	f        io.ReadWriteSeeker
-	offsets  map[string]int64
+	f       io.ReadWriteSeeker
+	offsets map[string]int64
 }
 
 // New return a new intialized DB.
-func New(filename string) (*DB, error) {
-	f, err := os.Create(filename)
-	if err != nil {
-		return nil, err
-	}
+func New(f io.ReadWriteSeeker) *DB {
 	offsetMap := make(map[string]int64)
-	db := &DB{filename: filename, f: f, offsets: offsetMap}
-	return db, nil
+	db := &DB{f: f, offsets: offsetMap}
+	return db
 }
 
 func writeBinaryBufferLength(data []byte) *bytes.Buffer {
