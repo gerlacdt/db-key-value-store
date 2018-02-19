@@ -11,8 +11,8 @@ BUILD_TIME?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
 PROJECT?=github.com/gerlacdt/db-key-value-store
 
 build:
-	go build -ldflags "-X ${PROJECT}/pkg/version.Release=${RELEASE} \
-	-X ${PROJECT}/pkg/version.Commit=${COMMIT} -X ${PROJECT}/pkg/version.BuildTime=${BUILD_TIME}" \
+	go build -ldflags "-X ${PROJECT}/pkg/db.Release=${RELEASE} \
+	-X ${PROJECT}/pkg/db.Commit=${COMMIT} -X ${PROJECT}/pkg/db.BuildTime=${BUILD_TIME}" \
 	-o ${NAME} "${PROJECT}/cmd/server"
 
 test:

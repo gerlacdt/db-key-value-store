@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gerlacdt/db-key-value-store/pb"
-	"github.com/gerlacdt/db-key-value-store/pkg/version"
 )
 
 // NewMainHandler creates all http handlers
@@ -33,7 +32,7 @@ func versionHandler(w http.ResponseWriter, r *http.Request) error {
 		Commit    string `json:"commit"`
 		Release   string `json:"release"`
 	}{
-		version.BuildTime, version.Commit, version.Release,
+		BuildTime, Commit, Release,
 	}
 	body, err := json.Marshal(info)
 	if err != nil {
