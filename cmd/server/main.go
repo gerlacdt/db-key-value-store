@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gerlacdt/db-example/pkg/config"
-	"github.com/gerlacdt/db-example/pkg/db"
+	"github.com/gerlacdt/db-key-value-store/pkg/config"
+	"github.com/gerlacdt/db-key-value-store/pkg/db"
 )
 
 func main() {
