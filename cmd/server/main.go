@@ -12,6 +12,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/gerlacdt/db-key-value-store/pkg/db"
+	"github.com/gerlacdt/db-key-value-store/pkg/handler"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 	defer f.Close()
 	defer os.Remove(config.Filename)
 
-	h, err := db.NewMainHandler(db.New(f))
+	h, err := handler.New(db.New(f))
 	if err != nil {
 		log.Fatal(err)
 	}
