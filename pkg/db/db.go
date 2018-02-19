@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sync"
 
 	"github.com/gerlacdt/db-key-value-store/pb"
 	"github.com/golang/protobuf/proto"
@@ -13,6 +14,7 @@ import (
 
 // DB type
 type DB struct {
+	lock    sync.RWMutex
 	f       io.ReadWriteSeeker
 	offsets map[string]int64
 }
@@ -60,6 +62,9 @@ func (db *DB) pbAppend(entity *pb.Entity) (int64, error) {
 
 // Set / stores a key-value pair in the database
 func (db *DB) Set(entity *pb.Entity) error {
+	db.lock.Lock()
+	defer db.lock.Unlock()
+
 	offset, err := db.pbAppend(entity)
 	if err != nil {
 		return err
@@ -70,6 +75,9 @@ func (db *DB) Set(entity *pb.Entity) error {
 
 // Delete an entry for given key from database
 func (db *DB) Delete(key string) error {
+	db.lock.Lock()
+	defer db.lock.Unlock()
+
 	entity := &pb.Entity{Tombstone: true, Key: key}
 	offset, err := db.pbAppend(entity)
 	if err != nil {
@@ -81,6 +89,9 @@ func (db *DB) Delete(key string) error {
 
 // Get a key-value pair from the database
 func (db *DB) Get(key string) (*pb.Entity, error) {
+	db.lock.RLock()
+	defer db.lock.RUnlock()
+
 	offset, ok := db.offsets[key]
 	if !ok {
 		return nil, nil
@@ -121,6 +132,9 @@ func (db *DB) readSize() (uint64, error) {
 
 // Recover from a crash and populate in-memory hashmap from existing file
 func (db *DB) Recover() error {
+	db.lock.Lock()
+	defer db.lock.Unlock()
+
 	// start reading file at beginning
 	offset := int64(0)
 	_, err := db.f.Seek(offset, 0)

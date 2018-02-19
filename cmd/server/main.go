@@ -32,11 +32,12 @@ func main() {
 	defer f.Close()
 	defer os.Remove(config.Filename)
 
-	srv := &http.Server{
-		Addr:    ":" + config.Port,
-		Handler: db.NewMainHandler(db.New(f)),
+	h, err := db.NewMainHandler(db.New(f))
+	if err != nil {
+		log.Fatal(err)
 	}
 
+	srv := &http.Server{Addr: ":" + config.Port, Handler: h}
 	go func() {
 		// graceful shutdown
 		interrupt := make(chan os.Signal, 1)

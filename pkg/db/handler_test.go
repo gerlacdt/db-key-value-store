@@ -11,7 +11,10 @@ import (
 
 func TestSingleHttpDelete(t *testing.T) {
 	db := setup(t)
-	r := NewMainHandler(db)
+	r, err := NewMainHandler(db)
+	if err != nil {
+		t.Fatalf("could not create handler: %v", err)
+	}
 	srv := httptest.NewServer(r)
 
 	// act
@@ -45,7 +48,10 @@ func TestSingleHttpDelete(t *testing.T) {
 
 func TestSingleHttpSetAndGet(t *testing.T) {
 	db := setup(t)
-	r := NewMainHandler(db)
+	r, err := NewMainHandler(db)
+	if err != nil {
+		t.Fatalf("could not create handler: %v", err)
+	}
 	srv := httptest.NewServer(r)
 
 	// act

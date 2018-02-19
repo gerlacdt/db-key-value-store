@@ -12,16 +12,18 @@ import (
 
 func TestSingleServiceGet(t *testing.T) {
 	db := setup(t)
+	svc, err := NewService(db)
+	if err != nil {
+		t.Fatalf("could not create service: %v", err)
+	}
 
-	service := NewService(db)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
-	err := service.Set(entity)
-	if err != nil {
+	if err := svc.Set(entity); err != nil {
 		t.Fatalf("error append")
 	}
-	readEntity, err := service.Get(key)
+	readEntity, err := svc.Get(key)
 	if err != nil {
 		t.Fatalf("error getting entity %v", err)
 	}
@@ -31,19 +33,20 @@ func TestSingleServiceGet(t *testing.T) {
 }
 
 func TestSingleServiceDelete(t *testing.T) {
-	// prepare
 	db := setup(t)
+	svc, err := NewService(db)
+	if err != nil {
+		t.Fatalf("could not create service: %v", err)
+	}
 
-	service := NewService(db)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
-	err := service.Set(entity)
-	if err != nil {
+	if err := svc.Set(entity); err != nil {
 		t.Fatalf("error append")
 	}
-	err = service.Delete(key)
-	readEntity, err := service.Get(key)
+	err = svc.Delete(key)
+	readEntity, err := svc.Get(key)
 	if readEntity != nil || err != nil {
 		t.Fatalf("readEntity expected nil, got %v", readEntity)
 	}
@@ -53,7 +56,10 @@ func TestMultipleServiceSet(t *testing.T) {
 	// prepare testint
 	db := setup(t)
 
-	service := NewService(db)
+	service, err := NewService(db)
+	if err != nil {
+		t.Fatalf("could not create service: %v", err)
+	}
 
 	var wg sync.WaitGroup
 	maxItems := 1000
@@ -83,7 +89,7 @@ func TestMultipleServiceSet(t *testing.T) {
 	wg.Wait() // wait for all goroutines to finish
 
 	// check if all key-values are inserted correctly
-	mapLen := len(service.db.offsets)
+	mapLen := len(service.DB.offsets)
 	if maxItems != mapLen {
 		t.Fatalf("mapLen: expected %d, got %d", maxItems, mapLen)
 	}

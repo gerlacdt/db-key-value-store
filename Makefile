@@ -16,7 +16,7 @@ build:
 	-o ${NAME} "${PROJECT}/cmd/server"
 
 test:
-	go test github.com/gerlacdt/db-key-value-store/...
+	go test -race github.com/gerlacdt/db-key-value-store/...
 
 run: build
 	PORT=8080 DB_FILENAME=${DB_FILE} ./app

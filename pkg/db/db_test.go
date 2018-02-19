@@ -1,7 +1,10 @@
 package db
 
 import (
+	"fmt"
 	"reflect"
+	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/gerlacdt/db-key-value-store/pb"
@@ -192,5 +195,54 @@ func TestMultipleRecover(t *testing.T) {
 	}
 	if !reflect.DeepEqual(entity2, readEntity2) {
 		t.Fatalf("expected %v, got %v", entity2, readEntity2)
+	}
+}
+
+func TestConcurrentSets(t *testing.T) {
+	db := setup(t)
+
+	var wg sync.WaitGroup
+	maxItems := 1000
+	buffChan := make(chan int, maxItems)
+	for i := 0; i < maxItems; i++ {
+		buffChan <- i
+	}
+	close(buffChan)
+
+	maxConcurrency := 4
+	for i := 0; i < maxConcurrency; i++ {
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+			for j := range buffChan {
+				// set foo-key-i and foo-value-i as entry in db
+				key := "foo-key-" + strconv.Itoa(j)
+				value := "foo-value-" + strconv.Itoa(j)
+				err := db.Set(&pb.Entity{Key: key, Value: []byte(value)})
+				if err != nil {
+					fmt.Printf("error inserting key-value: [T%d] %d\n", index, j)
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait() // wait for all goroutines to finish
+
+	// check if all key-values are inserted correctly
+	mapLen := len(db.offsets)
+	if maxItems != mapLen {
+		t.Fatalf("mapLen: expected %d, got %d", maxItems, mapLen)
+	}
+
+	for i := 0; i < maxItems; i++ {
+		expectedKey := "foo-key-" + strconv.Itoa(i)
+		expectedValue := "foo-value-" + strconv.Itoa(i)
+		entity, err := db.Get(expectedKey)
+		if err != nil {
+			fmt.Printf("error getting key-value: %d\n", i)
+		}
+		if string(expectedValue) != string(entity.Value) {
+			t.Fatalf("value expected %v, got %v", expectedValue, entity.Value)
+		}
 	}
 }

@@ -11,9 +11,13 @@ import (
 )
 
 // NewMainHandler creates all http handlers
-func NewMainHandler(db *DB) http.Handler {
+func NewMainHandler(db *DB) (http.Handler, error) {
 	r := http.NewServeMux()
-	service := NewService(db)
+	service, err := NewService(db)
+	if err != nil {
+		return nil, fmt.Errorf("could not create service: %v", err)
+	}
+
 	myhandler := NewHandler(service)
 	r.Handle("/db/", ErrorMiddleware(myhandler.HandleDb))
 	r.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +27,7 @@ func NewMainHandler(db *DB) http.Handler {
 		w.WriteHeader(http.StatusOK)
 	})
 	r.Handle("/version", ErrorMiddleware(versionHandler))
-	return r
+	return r, nil
 }
 
 func versionHandler(w http.ResponseWriter, r *http.Request) error {
