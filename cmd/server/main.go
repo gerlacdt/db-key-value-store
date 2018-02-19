@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/gerlacdt/db-key-value-store/pkg/config"
 	"github.com/gerlacdt/db-key-value-store/pkg/db"
@@ -44,6 +43,5 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error shutting down: %v\n", err)
 	}
-	time.Sleep(time.Second)
 	fmt.Println("Done")
 }
