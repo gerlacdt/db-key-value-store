@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -20,22 +19,24 @@ func main() {
 		Port     string `required:"true"`
 		Filename string `required:"true"`
 	}
-	if err := envconfig.Process("db_key_value_store", &config); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		envconfig.Usage("db_key_value_store", &config)
+	if err := envconfig.Process("", &config); err != nil {
+		log.Print(err)
+		envconfig.Usage("", &config)
 		os.Exit(1)
 	}
 
 	f, err := os.Create(config.Filename)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("could not create file %s: %v", config.Filename, err)
+		os.Exit(1)
 	}
 	defer f.Close()
 	defer os.Remove(config.Filename)
 
 	h, err := handler.New(db.New(f))
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("could not create handler: %v", err)
+		os.Exit(1)
 	}
 
 	srv := &http.Server{Addr: ":" + config.Port, Handler: h}
@@ -44,15 +45,17 @@ func main() {
 		interrupt := make(chan os.Signal, 1)
 		signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 		<-interrupt
-		log.Println("App is shutting down...")
+		log.Print("app is shutting down...")
 		if err := srv.Shutdown(context.Background()); err != nil {
-			log.Printf("Error shutting down: %v\n", err)
+			log.Printf("could not shutdown: %v\n", err)
 		}
 	}()
 
-	log.Printf("App is ready to listen and serve on port %s\n", config.Port)
+	log.Printf("app is ready to listen and serve on port %s", config.Port)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		log.Fatal(err)
+		log.Printf("server failed: %v", err)
+		os.Exit(1)
 	}
-	log.Println("Good bye")
+
+	log.Print("good bye!")
 }
