@@ -8,14 +8,21 @@ import (
 	"strings"
 
 	"github.com/gerlacdt/db-key-value-store/pb"
-	"github.com/gerlacdt/db-key-value-store/pkg/db"
 )
 
+// DB provides all the methods needed for storage.
+type DB interface {
+	Recover() error
+	Get(string) (*pb.Entity, error)
+	Set(*pb.Entity) error
+	Delete(string) error
+}
+
 // handler holds all http methods.
-type handler struct{ db *db.DB }
+type handler struct{ db DB }
 
 // New creates all http handlers.
-func New(db *db.DB) (http.Handler, error) {
+func New(db DB) (http.Handler, error) {
 	r := http.NewServeMux()
 
 	if err := db.Recover(); err != nil {
