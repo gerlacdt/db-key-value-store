@@ -2,18 +2,29 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/gerlacdt/db-key-value-store/pkg/config"
+	"github.com/kelseyhightower/envconfig"
+
 	"github.com/gerlacdt/db-key-value-store/pkg/db"
 )
 
 func main() {
-	config := config.NewConfig()
+	var config struct {
+		Port     string `required:"true"`
+		Filename string `required:"true"`
+	}
+	if err := envconfig.Process("db_key_value_store", &config); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		envconfig.Usage("db_key_value_store", &config)
+		os.Exit(1)
+	}
+
 	srv := &http.Server{
 		Addr:    ":" + config.Port,
 		Handler: db.NewMainHandler(config.Filename),
