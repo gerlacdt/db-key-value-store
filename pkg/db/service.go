@@ -4,7 +4,7 @@ import "github.com/gerlacdt/db-key-value-store/pb"
 
 // Service provides all database methods
 type Service struct {
-	db                *Db
+	db                *DB
 	SetRequestChannel chan *SetRequest
 }
 
@@ -16,7 +16,7 @@ type SetRequest struct {
 }
 
 // NewService creates a new db-service based on the given db reference
-func NewService(db *Db) *Service {
+func NewService(db *DB) *Service {
 	c := make(chan *SetRequest)
 	service := &Service{db: db, SetRequestChannel: c}
 

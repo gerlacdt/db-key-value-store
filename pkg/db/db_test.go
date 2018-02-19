@@ -36,7 +36,7 @@ func teardown(filename string) {
 func TestSingleGet(t *testing.T) {
 	before(testdb)
 	defer teardown(testdb)
-	db := NewDb(testdb)
+	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -56,7 +56,7 @@ func TestSingleGet(t *testing.T) {
 func TestMultipleGet(t *testing.T) {
 	before(testdb)
 	defer teardown(testdb)
-	db := NewDb(testdb)
+	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -88,7 +88,7 @@ func TestSingleDelete(t *testing.T) {
 	// prepare
 	before(testdb)
 	defer teardown(testdb)
-	db := NewDb(testdb)
+	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -107,7 +107,7 @@ func TestSingleRecover(t *testing.T) {
 	// prepare
 	before(testdb)
 	defer teardown(testdb)
-	db := NewDb(testdb)
+	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -117,7 +117,7 @@ func TestSingleRecover(t *testing.T) {
 	}
 
 	// clear map
-	db.offsetMap = make(map[string]int64)
+	db.offsets = make(map[string]int64)
 
 	err = db.Recover()
 	if err != nil {
@@ -138,7 +138,7 @@ func TestSingleRecoverWithDelete(t *testing.T) {
 	// prepare
 	before(testdb)
 	defer teardown(testdb)
-	db := NewDb(testdb)
+	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -153,7 +153,7 @@ func TestSingleRecoverWithDelete(t *testing.T) {
 	}
 
 	// clear map
-	db.offsetMap = make(map[string]int64)
+	db.offsets = make(map[string]int64)
 
 	err = db.Recover()
 	if err != nil {
@@ -169,7 +169,7 @@ func TestSingleRecoverWithDelete(t *testing.T) {
 func TestMultipleRecover(t *testing.T) {
 	before(testdb)
 	defer teardown(testdb)
-	db := NewDb(testdb)
+	db := New(testdb)
 
 	// first item
 	key := "foo-key"
@@ -200,7 +200,7 @@ func TestMultipleRecover(t *testing.T) {
 
 	// act
 	// clear map
-	db.offsetMap = make(map[string]int64)
+	db.offsets = make(map[string]int64)
 	err = db.Recover()
 	if err != nil {
 		t.Fatalf("error recovering %v", err)

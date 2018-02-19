@@ -13,7 +13,7 @@ import (
 func TestSingleServiceGet(t *testing.T) {
 	before(testdb)
 	defer teardown(testdb)
-	db := NewDb(testdb)
+	db := New(testdb)
 	service := NewService(db)
 	key := "foo-key"
 	value := "foo-value"
@@ -35,7 +35,7 @@ func TestSingleServiceDelete(t *testing.T) {
 	// prepare
 	before(testdb)
 	defer teardown(testdb)
-	db := NewDb(testdb)
+	db := New(testdb)
 	service := NewService(db)
 	key := "foo-key"
 	value := "foo-value"
@@ -55,7 +55,7 @@ func TestMultipleServiceSet(t *testing.T) {
 	// prepare testint
 	before(testdb)
 	defer teardown(testdb)
-	db := NewDb(testdb)
+	db := New(testdb)
 	service := NewService(db)
 
 	var wg sync.WaitGroup
@@ -86,7 +86,7 @@ func TestMultipleServiceSet(t *testing.T) {
 	wg.Wait() // wait for all goroutines to finish
 
 	// check if all key-values are inserted correctly
-	mapLen := len(service.db.offsetMap)
+	mapLen := len(service.db.offsets)
 	if maxItems != mapLen {
 		t.Fatalf("mapLen: expected %d, got %d", maxItems, mapLen)
 	}
