@@ -1,6 +1,6 @@
 package db
 
-import "github.com/gerlacdt/db-example/pb"
+import "github.com/gerlacdt/db-key-value-store/pb"
 
 // Service provides all database methods
 type Service struct {

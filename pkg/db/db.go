@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/gerlacdt/db-example/pb"
+	"github.com/gerlacdt/db-key-value-store/pb"
 	"github.com/golang/protobuf/proto"
 )
 

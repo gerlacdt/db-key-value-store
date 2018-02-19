@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gerlacdt/db-example/pb"
+	"github.com/gerlacdt/db-key-value-store/pb"
 )
 
 var testdb = "db.test.bin"

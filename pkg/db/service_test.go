@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/gerlacdt/db-example/pb"
+	"github.com/gerlacdt/db-key-value-store/pb"
 )
 
 func TestSingleServiceGet(t *testing.T) {

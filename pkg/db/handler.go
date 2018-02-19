@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gerlacdt/db-example/pb"
-	"github.com/gerlacdt/db-example/pkg/version"
+	"github.com/gerlacdt/db-key-value-store/pb"
+	"github.com/gerlacdt/db-key-value-store/pkg/version"
 )
 
 // NewMainHandler creates all http handlers
