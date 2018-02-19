@@ -10,13 +10,17 @@ import (
 	"github.com/gerlacdt/db-key-value-store/pb"
 )
 
-func setup(t *testing.T) (path string, teardown func()) {
+func setup(t *testing.T) (db *DB, teardown func()) {
 	t.Parallel()
 	path, err := ioutil.TempDir("", "")
 	if err != nil {
 		t.Fatalf("could not create temp dir: %v", err)
 	}
-	return filepath.Join(path, "db.test.bin"), func() {
+	db, err = New(filepath.Join(path, "db.test.bin"))
+	if err != nil {
+		t.Fatalf("could not create database: %v", err)
+	}
+	return db, func() {
 		if err := os.RemoveAll(path); err != nil {
 			t.Errorf("could not delete %s: %v", path, err)
 		}
@@ -24,9 +28,8 @@ func setup(t *testing.T) (path string, teardown func()) {
 }
 
 func TestSingleGet(t *testing.T) {
-	testdb, teardown := setup(t)
+	db, teardown := setup(t)
 	defer teardown()
-	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -44,9 +47,8 @@ func TestSingleGet(t *testing.T) {
 }
 
 func TestMultipleGet(t *testing.T) {
-	testdb, teardown := setup(t)
+	db, teardown := setup(t)
 	defer teardown()
-	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -75,9 +77,8 @@ func TestMultipleGet(t *testing.T) {
 }
 
 func TestSingleDelete(t *testing.T) {
-	testdb, teardown := setup(t)
+	db, teardown := setup(t)
 	defer teardown()
-	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -93,9 +94,8 @@ func TestSingleDelete(t *testing.T) {
 }
 
 func TestSingleRecover(t *testing.T) {
-	testdb, teardown := setup(t)
+	db, teardown := setup(t)
 	defer teardown()
-	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -123,9 +123,8 @@ func TestSingleRecover(t *testing.T) {
 }
 
 func TestSingleRecoverWithDelete(t *testing.T) {
-	testdb, teardown := setup(t)
+	db, teardown := setup(t)
 	defer teardown()
-	db := New(testdb)
 	key := "foo-key"
 	value := "foo-value"
 	entity := &pb.Entity{Tombstone: false, Key: key, Value: []byte(value)}
@@ -154,9 +153,8 @@ func TestSingleRecoverWithDelete(t *testing.T) {
 }
 
 func TestMultipleRecover(t *testing.T) {
-	testdb, teardown := setup(t)
+	db, teardown := setup(t)
 	defer teardown()
-	db := New(testdb)
 
 	// first item
 	key := "foo-key"

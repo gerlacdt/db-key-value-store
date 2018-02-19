@@ -25,9 +25,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	dbs, err := db.New(config.Filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	srv := &http.Server{
 		Addr:    ":" + config.Port,
-		Handler: db.NewMainHandler(config.Filename),
+		Handler: db.NewMainHandler(dbs),
 	}
 
 	go func() {
@@ -42,8 +47,7 @@ func main() {
 	}()
 
 	log.Printf("App is ready to listen and serve on port %s\n", config.Port)
-	err := srv.ListenAndServe()
-	if err != http.ErrServerClosed {
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 	log.Println("Good bye")

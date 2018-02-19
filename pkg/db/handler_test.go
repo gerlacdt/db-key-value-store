@@ -10,9 +10,9 @@ import (
 )
 
 func TestSingleHttpDelete(t *testing.T) {
-	testdb, teardown := setup(t)
+	db, teardown := setup(t)
 	defer teardown()
-	r := NewMainHandler(testdb)
+	r := NewMainHandler(db)
 	srv := httptest.NewServer(r)
 
 	// act
@@ -45,9 +45,9 @@ func TestSingleHttpDelete(t *testing.T) {
 }
 
 func TestSingleHttpSetAndGet(t *testing.T) {
-	testdb, teardown := setup(t)
+	db, teardown := setup(t)
 	defer teardown()
-	r := NewMainHandler(testdb)
+	r := NewMainHandler(db)
 	srv := httptest.NewServer(r)
 
 	// act
