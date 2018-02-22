@@ -1,4 +1,4 @@
-package version
+package handler
 
 var (
 	// BuildTime is a time label of the moment when the binary was built

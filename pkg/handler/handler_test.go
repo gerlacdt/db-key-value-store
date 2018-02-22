@@ -1,4 +1,4 @@
-package db
+package handler
 
 import (
 	"bytes"
@@ -7,13 +7,22 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gerlacdt/db-key-value-store/pkg/db"
+	"github.com/mattetti/filebuffer"
 )
 
+func setup(t *testing.T) http.Handler {
+	t.Parallel()
+	h, err := New(db.New(filebuffer.New(nil)))
+	if err != nil {
+		t.Fatalf("could not create handler: %v", err)
+	}
+	return h
+}
+
 func TestSingleHttpDelete(t *testing.T) {
-	// setup
-	before(testdb)
-	defer teardown(testdb)
-	r := NewMainHandler(testdb)
+	r := setup(t)
 	srv := httptest.NewServer(r)
 
 	// act
@@ -46,10 +55,7 @@ func TestSingleHttpDelete(t *testing.T) {
 }
 
 func TestSingleHttpSetAndGet(t *testing.T) {
-	// setup
-	before(testdb)
-	defer teardown(testdb)
-	r := NewMainHandler(testdb)
+	r := setup(t)
 	srv := httptest.NewServer(r)
 
 	// act
