@@ -3,6 +3,8 @@
 
 This is a learning project which implements a simple Key-Value database.
 
+You can watch a code review in [justforfunc](https://www.youtube.com/watch?v=ifBUfIb7kdo).
+
 
 ### Learning goals
 
@@ -33,7 +35,7 @@ Currenty supported features:
   * dockerized with health and readiness http-endpoints
   * graceful http server shutdown
 * prefers json but also supports binary data
-* thread-safe (one single write goroutine is used, so database-file is not corrupted during parallel writes)
+* thread-safe (uses mutexes for read/writs, so database-file is not corrupted during parallel requests)
 
 
 ToDos:
