@@ -142,7 +142,7 @@ func (db *DB) Recover() error {
 		return fmt.Errorf("file seek error %v", err)
 	}
 	// run through all key-value pairs and populate in-memory hashmap
-	for i := 0; i < 8; i++ {
+	for {
 		size, err := db.readSize()
 		if err != nil && err == io.EOF {
 			break
