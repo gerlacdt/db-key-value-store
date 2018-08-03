@@ -19,7 +19,7 @@ test:
 	go test -race github.com/gerlacdt/db-key-value-store/...
 
 run: build
-	PORT=8080 DB_FILENAME=${DB_FILE} ./app
+	PORT=8080 FILENAME=${DB_FILE} ./app
 
 proto:
 	protoc -I ${PB_DIR} ${PB_DIR}/db.proto --go_out=${PB_DIR}
