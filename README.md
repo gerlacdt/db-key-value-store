@@ -52,7 +52,7 @@ ToDos:
 
 ```bash
 # compile and start static binary (see below how to compile)
-PORT=8080 DB_FILENAME=${DB_FILE} ./app
+PORT=8080 FILENAME=${DB_FILE} ./app
 
 # SET key=mykey value={"foo": "bar"}
 http --verbose POST "http://localhost:8080/db/mykey" Content-Type:application/octet-stream foo=bar
@@ -73,7 +73,7 @@ http --verbose DELETE "http://localhost:8080/db/mykey"
 ```bash
 # use provided Makefile
 
-# build and run  (build, set env-vars like PORT and DB_FILENAME and runs the server)
+# build and run  (build, set env-vars like PORT and FILENAME and runs the server)
 make run
 
 # recreate protocol buffer files
@@ -83,5 +83,5 @@ make proto
 make clean
 
 # run without makefile (assumes static binary is already there)
-PORT=8080 DB_FILENAME=${DB_FILE} ./app
+PORT=8080 FILENAME=${DB_FILE} ./app
 ```
